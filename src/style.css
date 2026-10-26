@@ -205,18 +205,22 @@ input {
 }
 
 .bandera {
-  display: grid;
-  height: 145px;
-  place-items: center;
-  font-size: 76px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .imagen-bandera {
   width: 100%;
-  height: 100px;
+  height: 100%;
   object-fit: contain;
   display: block;
-  margin: 0 auto;
 }
 
 .datos-pais {
@@ -319,10 +323,6 @@ input {
   .buscador {
     height: 53px;
     gap: 8px;
-  }
-
-  .buscador-ayuda {
-    display: none;
   }
 
   .seccion-titulo h2 {

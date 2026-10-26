@@ -1,7 +1,54 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
 const paises = ref([])
+const busqueda = ref('')
+
+const paisesFiltrados = computed(() => {
+  const textoBusqueda = busqueda.value
+    .toLocaleLowerCase('es')
+    .trim()
+
+  return paises.value
+    .filter(pais => {
+      const nombre =
+        pais.names.translations?.spa?.common ||
+        pais.names.common ||
+        ''
+
+      return nombre
+        .toLocaleLowerCase('es')
+        .includes(textoBusqueda)
+    })
+    .sort((a, b) => {
+      const nombreA =
+        a.names.translations?.spa?.common ||
+        a.names.common ||
+        ''
+
+      const nombreB =
+        b.names.translations?.spa?.common ||
+        b.names.common ||
+        ''
+
+      return nombreA.localeCompare(nombreB, 'es', {
+        sensitivity: 'base'
+      })
+    })
+})
+
+function traducirRegion(region) {
+  const regiones = {
+    Africa: 'África',
+    Americas: 'América',
+    Asia: 'Asia',
+    Europe: 'Europa',
+    Oceania: 'Oceanía',
+    Antarctic: 'Antártida'
+  }
+
+  return regiones[region] || region || 'No disponible'
+}
 
 onMounted(async () => {
   try {
@@ -14,17 +61,14 @@ onMounted(async () => {
       }
     )
 
-    const cuerpo = await respuesta.text()
-
-    console.log('Estado HTTP:', respuesta.status)
-    console.log('Respuesta de REST Countries:', cuerpo)
-
     if (!respuesta.ok) {
       throw new Error(`La API respondió HTTP ${respuesta.status}`)
     }
 
-    const resultado = JSON.parse(cuerpo)
+    const resultado = await respuesta.json()
     paises.value = resultado.data.objects
+
+    console.log('Países cargados:', paises.value.length)
   } catch (error) {
     console.error('Error al consultar los países:', error)
   }
@@ -56,12 +100,11 @@ onMounted(async () => {
         <div class="buscador">
           <span class="buscador-icono">⌕</span>
           <input
+            v-model="busqueda"
             type="text"
             placeholder="Buscar un país..."
             aria-label="Buscar un país"
-            disabled
           />
-          <span class="buscador-ayuda">Próximamente</span>
         </div>
       </section>
 
@@ -73,13 +116,13 @@ onMounted(async () => {
           </div>
 
           <span class="contador">
-            {{ paises.length }} países
+            {{ paisesFiltrados.length }} países
           </span>
         </div>
 
         <div class="grid-paises">
           <article
-            v-for="pais in paises"
+            v-for="pais in paisesFiltrados"
             :key="pais.codes.alpha_3"
             class="tarjeta-pais"
           >
@@ -87,7 +130,10 @@ onMounted(async () => {
               <img
                 v-if="pais.flag?.url_png"
                 :src="pais.flag.url_png"
-                :alt="`Bandera de ${pais.names.common}`"
+                :alt="`Bandera de ${
+                  pais.names.translations?.spa?.common ||
+                  pais.names.common
+                }`"
                 class="imagen-bandera"
               />
               <span v-else>🏳️</span>
@@ -98,10 +144,12 @@ onMounted(async () => {
                 {{ pais.codes.alpha_2 }}
               </span>
 
-              <h3>{{ pais.names.translations.spa.common }}</h3>
+              <h3>
+                {{ pais.names.translations?.spa?.common || pais.names.common }}
+              </h3>
 
               <p class="nombre-oficial">
-                {{ pais.names.translations.spa.official }}
+                {{ pais.names.translations?.spa?.official || pais.names.official }}
               </p>
 
               <div class="detalle">
@@ -113,7 +161,9 @@ onMounted(async () => {
 
               <div class="detalle">
                 <span>Región</span>
-                <strong>{{ pais.region }}</strong>
+                <strong>
+                  {{ traducirRegion(pais.region) }}
+                </strong>
               </div>
 
               <div class="detalle">
