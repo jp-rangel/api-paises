@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 
 const paises = ref([])
 const busqueda = ref('')
+const regionSeleccionada = ref('')
 
 const paisesFiltrados = computed(() => {
   const textoBusqueda = busqueda.value
@@ -16,9 +17,15 @@ const paisesFiltrados = computed(() => {
         pais.names.common ||
         ''
 
-      return nombre
+      const coincideNombre = nombre
         .toLocaleLowerCase('es')
         .includes(textoBusqueda)
+
+      const coincideRegion =
+        !regionSeleccionada.value ||
+        pais.region === regionSeleccionada.value
+
+      return coincideNombre && coincideRegion
     })
     .sort((a, b) => {
       const nombreA =
@@ -60,17 +67,16 @@ onMounted(async () => {
         }
       }
     )
-
     if (!respuesta.ok) {
       throw new Error(`La API respondió HTTP ${respuesta.status}`)
     }
 
     const resultado = await respuesta.json()
     paises.value = resultado.data.objects
-
-    console.log('Países cargados:', paises.value.length)
   } catch (error) {
     console.error('Error al consultar los países:', error)
+    errorCarga.value =
+      'No se pudieron cargar los países. Verifica tu conexión e inténtalo de nuevo.'
   }
 })
 </script>
@@ -105,6 +111,20 @@ onMounted(async () => {
             placeholder="Buscar un país..."
             aria-label="Buscar un país"
           />
+        </div>
+
+        <div class="filtro-region">
+          <label for="region">Filtrar por región:</label>
+
+          <select id="region" v-model="regionSeleccionada">
+            <option value="">Todas las regiones</option>
+            <option value="Africa">África</option>
+            <option value="Americas">América</option>
+            <option value="Asia">Asia</option>
+            <option value="Europe">Europa</option>
+            <option value="Oceania">Oceanía</option>
+            <option value="Antarctic">Antártida</option>
+          </select>
         </div>
       </section>
 
@@ -161,9 +181,7 @@ onMounted(async () => {
 
               <div class="detalle">
                 <span>Región</span>
-                <strong>
-                  {{ traducirRegion(pais.region) }}
-                </strong>
+                <strong>{{ traducirRegion(pais.region) }}</strong>
               </div>
 
               <div class="detalle">
