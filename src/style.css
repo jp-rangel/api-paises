@@ -211,16 +211,12 @@ input {
   font-size: 76px;
 }
 
-.bandera-canada {
-  background: #fff0f1;
-}
-
-.bandera-japon {
-  background: #f0f5ff;
-}
-
-.bandera-brasil {
-  background: #eaf8ef;
+.imagen-bandera {
+  width: 100%;
+  height: 100px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
 }
 
 .datos-pais {
@@ -240,7 +236,7 @@ input {
   font-size: 23px;
 }
 
-.nombre-ingles {
+.nombre-oficial {
   margin: 0 0 23px;
   color: var(--secundario);
   font-size: 12px;
