@@ -20,8 +20,15 @@ const paisesFiltrados = computed(() => {
         ''
 
       const coincideNombre = nombre
+      const coincideNombre = nombre
         .toLocaleLowerCase('es')
         .includes(textoBusqueda)
+
+      const coincideRegion =
+        !regionSeleccionada.value ||
+        pais.region === regionSeleccionada.value
+
+      return coincideNombre && coincideRegion
 
       const coincideRegion =
         !regionSeleccionada.value ||
@@ -60,6 +67,9 @@ function traducirRegion(region) {
 }
 
 onMounted(async () => {
+  cargando.value = true
+  errorCarga.value = ''
+
   cargando.value = true
   errorCarga.value = ''
 
@@ -139,6 +149,20 @@ onMounted(async () => {
             <option value="Antarctic">Antártida</option>
           </select>
         </div>
+
+        <div class="filtro-region">
+          <label for="region">Filtrar por región:</label>
+
+          <select id="region" v-model="regionSeleccionada">
+            <option value="">Todas las regiones</option>
+            <option value="Africa">África</option>
+            <option value="Americas">América</option>
+            <option value="Asia">Asia</option>
+            <option value="Europe">Europa</option>
+            <option value="Oceania">Oceanía</option>
+            <option value="Antarctic">Antártida</option>
+          </select>
+        </div>
       </section>
 
       <section class="seccion-paises">
@@ -153,6 +177,19 @@ onMounted(async () => {
           </span>
         </div>
 
+        <p v-if="cargando" class="mensaje-estado">
+          Cargando países...
+        </p>
+
+        <p v-else-if="errorCarga" class="mensaje-estado error">
+          {{ errorCarga }}
+        </p>
+
+        <p v-else-if="paisesFiltrados.length === 0" class="mensaje-estado">
+          No se encontraron países que coincidan con tu búsqueda.
+        </p>
+
+        <div v-else class="grid-paises">
         <p v-if="cargando" class="mensaje-estado">
           Cargando países...
         </p>
@@ -206,6 +243,7 @@ onMounted(async () => {
 
               <div class="detalle">
                 <span>Región</span>
+                <strong>{{ traducirRegion(pais.region) }}</strong>
                 <strong>{{ traducirRegion(pais.region) }}</strong>
               </div>
 
