@@ -3,8 +3,6 @@ import { ref, onMounted, computed } from 'vue'
 
 const paises = ref([])
 const busqueda = ref('')
-const cargando = ref(true)
-const errorCarga = ref('')
 const regionSeleccionada = ref('')
 
 const paisesFiltrados = computed(() => {
@@ -72,24 +70,16 @@ onMounted(async () => {
         }
       }
     )
-
     if (!respuesta.ok) {
       throw new Error(`La API respondió HTTP ${respuesta.status}`)
     }
 
     const resultado = await respuesta.json()
-
-    if (!Array.isArray(resultado.data?.objects)) {
-      throw new Error('La respuesta de la API no tiene el formato esperado.')
-    }
-
     paises.value = resultado.data.objects
   } catch (error) {
     console.error('Error al consultar los países:', error)
     errorCarga.value =
       'No se pudieron cargar los países. Verifica tu conexión e inténtalo de nuevo.'
-  } finally {
-    cargando.value = false
   }
 })
 </script>
