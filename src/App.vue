@@ -3,6 +3,9 @@ import { ref, onMounted, computed } from 'vue'
 
 const paises = ref([])
 const busqueda = ref('')
+const cargando = ref(true)
+const errorCarga = ref('')
+const regionSeleccionada = ref('')
 
 const paisesFiltrados = computed(() => {
   const textoBusqueda = busqueda.value
@@ -16,9 +19,15 @@ const paisesFiltrados = computed(() => {
         pais.names.common ||
         ''
 
-      return nombre
+      const coincideNombre = nombre
         .toLocaleLowerCase('es')
         .includes(textoBusqueda)
+
+      const coincideRegion =
+        !regionSeleccionada.value ||
+        pais.region === regionSeleccionada.value
+
+      return coincideNombre && coincideRegion
     })
     .sort((a, b) => {
       const nombreA =
@@ -51,6 +60,9 @@ function traducirRegion(region) {
 }
 
 onMounted(async () => {
+  cargando.value = true
+  errorCarga.value = ''
+
   try {
     const respuesta = await fetch(
       'https://api.restcountries.com/countries/v5?limit=100',
@@ -66,11 +78,18 @@ onMounted(async () => {
     }
 
     const resultado = await respuesta.json()
-    paises.value = resultado.data.objects
 
-    console.log('Países cargados:', paises.value.length)
+    if (!Array.isArray(resultado.data?.objects)) {
+      throw new Error('La respuesta de la API no tiene el formato esperado.')
+    }
+
+    paises.value = resultado.data.objects
   } catch (error) {
     console.error('Error al consultar los países:', error)
+    errorCarga.value =
+      'No se pudieron cargar los países. Verifica tu conexión e inténtalo de nuevo.'
+  } finally {
+    cargando.value = false
   }
 })
 </script>
@@ -106,6 +125,20 @@ onMounted(async () => {
             aria-label="Buscar un país"
           />
         </div>
+
+        <div class="filtro-region">
+          <label for="region">Filtrar por región:</label>
+
+          <select id="region" v-model="regionSeleccionada">
+            <option value="">Todas las regiones</option>
+            <option value="Africa">África</option>
+            <option value="Americas">América</option>
+            <option value="Asia">Asia</option>
+            <option value="Europe">Europa</option>
+            <option value="Oceania">Oceanía</option>
+            <option value="Antarctic">Antártida</option>
+          </select>
+        </div>
       </section>
 
       <section class="seccion-paises">
@@ -120,7 +153,19 @@ onMounted(async () => {
           </span>
         </div>
 
-        <div class="grid-paises">
+        <p v-if="cargando" class="mensaje-estado">
+          Cargando países...
+        </p>
+
+        <p v-else-if="errorCarga" class="mensaje-estado error">
+          {{ errorCarga }}
+        </p>
+
+        <p v-else-if="paisesFiltrados.length === 0" class="mensaje-estado">
+          No se encontraron países que coincidan con tu búsqueda.
+        </p>
+
+        <div v-else class="grid-paises">
           <article
             v-for="pais in paisesFiltrados"
             :key="pais.codes.alpha_3"
@@ -161,9 +206,7 @@ onMounted(async () => {
 
               <div class="detalle">
                 <span>Región</span>
-                <strong>
-                  {{ traducirRegion(pais.region) }}
-                </strong>
+                <strong>{{ traducirRegion(pais.region) }}</strong>
               </div>
 
               <div class="detalle">
